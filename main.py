@@ -1,9 +1,11 @@
 import json
 import logging
 import time
+import traceback
 from datetime import datetime
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.properties import Properties, PacketTypes
 
 from data import Network, StatRecord
 from util.common import logging_config
@@ -11,45 +13,58 @@ from util.orm import Session
 
 
 def main():
-    db_session = Session()
+    with Session() as db_session:
+        client = make_client(db_session)
+        client.loop_forever()
 
+
+def make_client(db_session: Session) -> mqtt.Client:
     client = mqtt.Client(client_id='stat-client', protocol=mqtt.MQTTv5)
 
+    connect_properties = Properties(PacketTypes.CONNECT)
+    connect_properties.SessionExpiryInterval = 86400
+
+    client.connect('192.168.1.1', 1883, clean_start=False, properties=connect_properties)
+    client.subscribe('home/router-stat', qos=2)
     client.on_message = lambda _, __, msg: handle_message(db_session, msg)
 
-    client.connect('192.168.1.1', 1883)
-    client.subscribe('home/router-stat', qos=2)
-
     logging.info('# MQTT subscribed.')
-
-    client.loop_forever()
-
-    db_session.close()
+    return client
 
 
 def handle_message(session: Session, msg: mqtt.MQTTMessage):
     logging.info(f'# Get new message.')
 
-    timestamp = int(dict(msg.properties.UserProperty).get('timestamp', time.time()))
-    the_time = datetime.fromtimestamp(timestamp)
+    try:
+        timestamp = int(dict(msg.properties.UserProperty).get('timestamp', time.time()))
+        the_time = datetime.fromtimestamp(timestamp)
 
-    data = json.loads(msg.payload)
-    count = 0
+        data = json.loads(msg.payload)
+        count = 0
 
-    for k, v in data.items():
-        if isinstance(v, dict) and 'ip_list' in v:
-            records = parse_records(v, the_time)
+        for k, v in data.items():
+            if isinstance(v, dict) and 'ip_list' in v:
+                records = parse_records(v, the_time)
 
-            for record in records:
-                session.add(record)
-                count += 1
+                for record in records:
+                    session.add(record)
+                    count += 1
 
-    session.commit()
+        session.commit()
 
-    logging.info(f'# {count} new records added.')
+        logging.info(f'# {count} new records added.')
+
+    except Exception as e:
+        logging.error(f'# Error when handling message, {msg=}:')
+
+        for attr in dir(msg):
+            if not attr.startswith('_'):
+                logging.error(f'    >> {attr}: {getattr(msg, attr)}')
+
+        traceback.print_exc()
 
 
-def parse_records(data: dict, the_time: datetime):
+def parse_records(data: dict, the_time: datetime) -> list[StatRecord]:
     network = Network.parse(data['ifname'])
     device = data['hostname']
 
