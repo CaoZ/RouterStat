@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.types import String
 
@@ -8,11 +8,10 @@ from config import Config
 _db_url = 'mysql+mysqldb://{user}:{password}@{host}/{db}'.format_map(Config.DB_INFO)
 
 engine = create_engine(_db_url, pool_recycle=3600)
-Base = declarative_base()
 Session = sessionmaker(bind=engine)
 
 
-class AlchemyMixin:
+class Base(DeclarativeBase):
     def __setattr__(self, key, value):
         # 当给 String 类型字段赋值时限制字符串的长度, 如 Column(String(20)) 中最长只能有 20 个字符.
         if isinstance(value, str):

@@ -2,7 +2,7 @@ from enum import Enum
 
 from sqlalchemy import Column, types
 
-from util.orm import AlchemyMixin, Base
+from util.orm import Base
 
 
 class Network(Enum):
@@ -26,7 +26,7 @@ class Network(Enum):
         return Network.UNKNOWN
 
 
-class StatRecord(AlchemyMixin, Base):
+class StatRecord(Base):
     __tablename__ = 'router_stat'
 
     id = Column(types.Integer, primary_key=True)
