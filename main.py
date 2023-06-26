@@ -7,6 +7,7 @@ from datetime import datetime
 import paho.mqtt.client as mqtt
 from paho.mqtt.properties import Properties, PacketTypes
 
+from config import Config
 from data import Network, StatRecord
 from util.common import logging_config
 from util.orm import Session
@@ -21,11 +22,11 @@ def main():
 def make_client(db_session: Session) -> mqtt.Client:
     client = mqtt.Client(client_id='stat-client', protocol=mqtt.MQTTv5)
 
-    connect_properties = Properties(PacketTypes.CONNECT)
-    connect_properties.SessionExpiryInterval = 86400
+    properties = Properties(PacketTypes.CONNECT)
+    properties.SessionExpiryInterval = Config.MQTT['session_expiry_interval']
 
-    client.connect('192.168.1.1', 1883, clean_start=False, properties=connect_properties)
-    client.subscribe('home/router-stat', qos=2)
+    client.connect(Config.MQTT['host'], Config.MQTT['port'], clean_start=False, properties=properties)
+    client.subscribe(Config.MQTT['topic'], qos=2)
     client.on_message = lambda _, __, msg: handle_message(db_session, msg)
 
     logging.info('# MQTT subscribed.')
