@@ -1,0 +1,9 @@
+#!/bin/sh /etc/rc.common
+
+START=50
+
+start() {
+    /data/cz/bin/mosquitto-2 -c /etc/mosquitto.conf -d
+    return 0
+}
+
