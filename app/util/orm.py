@@ -87,12 +87,12 @@ class Base(DeclarativeBase):
     @classmethod
     def print_create_table_sql(cls):
         """
-        打印下数据表的创建语句, 以便手动创建等; 但是部分索引语句将不会列出
+        打印表的创建语句, 以便手动创建等用途
         """
-        from sqlalchemy.schema import CreateTable
+        mock_engine = create_engine(_db_url, strategy='mock', executor=dump)
 
         print('#### Create table SQL for model {}: ####'.format(cls))
-        print(CreateTable(cls.__table__).compile(engine))
+        cls.__table__.create(mock_engine)
         print('#' * 20)
 
     @classmethod
@@ -101,3 +101,7 @@ class Base(DeclarativeBase):
         如果需要的表不存在, 创建它
         """
         cls.__table__.create(engine, checkfirst=True)
+
+
+def dump(sql, *args, **kwargs):
+    print(sql.compile(dialect=engine.dialect))
