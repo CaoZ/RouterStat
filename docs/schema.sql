@@ -7,5 +7,7 @@ CREATE TABLE router_stat (
 	rx_rate INTEGER,
 	tx_rate INTEGER,
 	timestamp DATETIME,
-	PRIMARY KEY (id)
+	PRIMARY KEY (id),
+	KEY ix_router_stat_ip (ip),
+	KEY ix_router_stat_timestamp (timestamp)
 );

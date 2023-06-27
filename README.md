@@ -40,7 +40,7 @@ bind_address 0.0.0.0
 allow_anonymous true
 ```
 
-[/etc/init.d/mosquitto-2](docs/mosquitto-2)
+[/etc/init.d/mosquitto-2](docs/mosquitto-2):
 
 ```sh
 #!/bin/sh /etc/rc.common
@@ -65,23 +65,7 @@ start() {
 
 使用 Python 编写 MQTT 消费者程序，解析数据并写入数据库。如果是 Windows 可以使用 [nssm](https://nssm.cc) 将其[注册为服务](docs/install.bat)。
 
-配置在 [config.py](app/config.py) 中。
-
-[创建所需表：](docs/schema.sql)
-
-```sql
-CREATE TABLE router_stat (
-	id INTEGER NOT NULL AUTO_INCREMENT,
-	ip VARCHAR(15),
-	mac CHAR(17),
-	network ENUM('2.4G','5G','Ethernet','Unknown'),
-	device VARCHAR(255),
-	rx_rate INTEGER,
-	tx_rate INTEGER,
-	timestamp DATETIME,
-	PRIMARY KEY (id)
-);
-```
+配置在 [config.py](app/config.py) 中，表的结构在 [data.py](app/data.py#L29) 中。
 
 ### 2.4 安装 [Grafana](https://grafana.com) 并创建监控面板
 
@@ -96,5 +80,3 @@ select sum(rx_rate) as rx_rate, sum(tx_rate) as tx_rate, unix_timestamp(timestam
 ## Screenshot:
 
 ![监控面板](docs/screenshot.png)
-
-
