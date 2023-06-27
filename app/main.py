@@ -14,6 +14,8 @@ from util.orm import Session
 
 
 def main():
+    StatRecord.create_table_if_not_exist()
+
     with Session() as db_session:
         client = make_client(db_session)
         client.loop_forever()
