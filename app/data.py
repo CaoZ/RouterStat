@@ -31,7 +31,7 @@ class StatRecord(Base):
 
     id = Column(types.Integer, primary_key=True)
     ip = Column(types.String(15), index=True)
-    mac = Column(types.String(17))
+    mac = Column(types.CHAR(17))
     network = Column(types.Enum(Network, values_callable=lambda enum: [x.value for x in enum]))
     device = Column(types.String(255))
     rx_rate = Column(types.Integer)
