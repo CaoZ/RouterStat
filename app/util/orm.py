@@ -1,3 +1,8 @@
+import json
+from datetime import datetime, date, time
+from enum import Enum
+from json import JSONEncoder
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -84,6 +89,11 @@ class Base(DeclarativeBase):
 
         return d
 
+    def to_json(self, **kwargs) -> str:
+        as_dict = self.to_dict(**kwargs)
+        as_json = json.dumps(as_dict, ensure_ascii=False, cls=Encoder)
+        return as_json
+
     @classmethod
     def print_create_table_sql(cls):
         """
@@ -105,3 +115,17 @@ class Base(DeclarativeBase):
 
 def dump(sql, *args, **kwargs):
     print(sql.compile(dialect=engine.dialect))
+
+
+class Encoder(JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            value = o.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(o, (date, time)):
+            value = o.isoformat()
+        elif isinstance(o, Enum):
+            value = o.value
+        else:
+            return super().default(o)
+
+        return value
