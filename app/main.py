@@ -5,16 +5,23 @@ import traceback
 from datetime import datetime
 
 import paho.mqtt.client as mqtt
-from paho.mqtt.properties import Properties, PacketTypes
+from paho.mqtt.packettypes import PacketTypes
+from paho.mqtt.properties import Properties
 
 from config import Config
-from data import Network, StatRecord
+from data import Network, NetworkStatRecord, StorageStatRecord
+from hyper_v_logger import HyperVLogger
 from util.common import logging_config
 from util.orm import Session
 
 
 def main():
-    StatRecord.create_table_if_not_exist()
+    NetworkStatRecord.create_table_if_not_exist()
+    StorageStatRecord.create_table_if_not_exist()
+
+    with Session() as db_session:
+        logger = HyperVLogger(db_session, Config.HYPER_V_LOG_INTERVAL)
+        logger.start()
 
     with Session() as db_session:
         client = make_client(db_session)
@@ -48,10 +55,8 @@ def handle_message(session: Session, msg: mqtt.MQTTMessage):
         for k, v in data.items():
             if isinstance(v, dict) and 'ip_list' in v:
                 records = parse_records(v, the_time)
-
-                for record in records:
-                    session.add(record)
-                    count += 1
+                session.add_all(records)
+                count += len(records)
 
         session.commit()
 
@@ -67,7 +72,7 @@ def handle_message(session: Session, msg: mqtt.MQTTMessage):
         traceback.print_exc()
 
 
-def parse_records(data: dict, the_time: datetime) -> list[StatRecord]:
+def parse_records(data: dict, the_time: datetime) -> list[NetworkStatRecord]:
     network = Network.parse(data['ifname'])
     device = data['hostname']
 
@@ -80,7 +85,7 @@ def parse_records(data: dict, the_time: datetime) -> list[StatRecord]:
         tx_rate = ip_data['tx_rate']
 
         if rx_rate > 0 or tx_rate > 0:
-            record = StatRecord(ip=ip, mac=mac, network=network, device=device, rx_rate=rx_rate, tx_rate=tx_rate, timestamp=the_time)
+            record = NetworkStatRecord(ip=ip, mac=mac, network=network, device=device, rx_rate=rx_rate, tx_rate=tx_rate, timestamp=the_time)
             records.append(record)
 
     return records

@@ -10,7 +10,7 @@ from sqlalchemy.types import String
 
 from config import Config
 
-_db_url = 'mysql+mysqldb://{user}:{password}@{host}/{db}'.format_map(Config.DB)
+_db_url = 'mysql+pymysql://{user}:{password}@{host}/{db}'.format_map(Config.DB)
 
 engine = create_engine(_db_url, pool_recycle=3600)
 Session = sessionmaker(bind=engine)

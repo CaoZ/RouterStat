@@ -1,4 +1,4 @@
-## 使用 MQTT / Python / Grafana 实现小米路由器网速查看与统计
+## Part I: 使用 MQTT / Python / Grafana 实现小米路由器网速查看与统计
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org)
 
@@ -77,6 +77,28 @@ start() {
 select sum(rx_rate) as rx_rate, sum(tx_rate) as tx_rate, unix_timestamp(timestamp) as time from home.router_stat where $__timeFilter(timestamp) group by timestamp
 ```
 
+<br><br>
+
+
+## Part II: Hyper-V 虚拟机网络 / 硬盘使用统计
+
+后来网络结构变了，有设备（虚拟机）直连光猫，不能通过路由器进行网速监控了。经过一番尝试，发现可以使用 [Windows 性能计数器](https://learn.microsoft.com/zh-cn/windows/win32/perfctrs/performance-counters-portal) 来收集关注的信息。
+
+![性能计数器](docs/performance-counters.webp)
+
+关注的数据：
+```
+\Hyper-V Virtual Network Adapter(*)\Bytes Received/sec
+\Hyper-V Virtual Network Adapter(*)\Bytes Sent/sec
+\Hyper-V Virtual Storage Device(*)\Read Bytes/sec
+\Hyper-V Virtual Storage Device(*)\Write Bytes/sec`
+```
+
+<br>
+
+
 ## Screenshot:
 
-![监控面板](docs/screenshot.png)
+![网络监控](docs/network-stat.webp)
+
+![存储监控](docs/storage-stat.webp)

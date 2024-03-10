@@ -26,8 +26,13 @@ class Network(Enum):
         return Network.UNKNOWN
 
 
-class StatRecord(Base):
-    __tablename__ = 'router_stat'
+class Storage(Enum):
+    SYSTEM = 'system'
+    DATA = 'data'
+
+
+class NetworkStatRecord(Base):
+    __tablename__ = 'network_stat'
 
     id = Column(types.Integer, primary_key=True)
     ip = Column(types.String(15), index=True)
@@ -36,4 +41,15 @@ class StatRecord(Base):
     device = Column(types.String(255))
     rx_rate = Column(types.Integer)
     tx_rate = Column(types.Integer)
+    timestamp = Column(types.DateTime, index=True)
+
+
+class StorageStatRecord(Base):
+    __tablename__ = 'storage_stat'
+
+    id = Column(types.Integer, primary_key=True)
+    device = Column(types.String(255), index=True)
+    storage_type = Column(types.Enum(Storage, values_callable=lambda enum: [x.value for x in enum]))
+    read_rate = Column(types.Integer)
+    write_rate = Column(types.Integer)
     timestamp = Column(types.DateTime, index=True)
