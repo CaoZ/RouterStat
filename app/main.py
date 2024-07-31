@@ -31,12 +31,13 @@ def main():
 def make_client(db_session: Session) -> mqtt.Client:
     client = mqtt.Client(client_id='stat-client', protocol=mqtt.MQTTv5)
 
+    client.on_connect = lambda *args: client.subscribe(Config.MQTT['topic'], qos=2)
+    client.on_message = lambda _, __, msg: handle_message(db_session, msg)
+
     properties = Properties(PacketTypes.CONNECT)
     properties.SessionExpiryInterval = Config.MQTT['session_expiry_interval']
 
     client.connect(Config.MQTT['host'], Config.MQTT['port'], clean_start=False, properties=properties)
-    client.subscribe(Config.MQTT['topic'], qos=2)
-    client.on_message = lambda _, __, msg: handle_message(db_session, msg)
 
     logging.info('# MQTT subscribed.')
     return client
